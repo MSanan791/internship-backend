@@ -40,25 +40,31 @@ Employee.init(
   },
 );
 
-(async()=>{
-    Employee.sync({ alter: true })
+(async () => {
+  try {
+    await Employee.sync({ alter: true });
+  } catch (err) {
+    console.error(err);
+  }
 })();
  
 
 // the defined model is the class itself
 console.log(Employee === sequelize.models.User); // true
 
-router.post('/adduser/', async(req,res)=>{
-   try{
-    console.log(req.body);
-    
+router.post('/adduser/', async (req, res) => {
+  try {
+    const { firstName, lastName, email, password } = req.body;
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).send('Missing required fields');
+    }
     const user = await Employee.create(req.body);
-    console.log(user)
-    res.send("user created successfully")
-   }catch(err){
-    console.error("warrgya program")
-   }
-})
+    res.send('User created successfully');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error creating user');
+  }
+});
 
 router.post('/uploadfile', async (req,res) =>{
 
@@ -142,8 +148,18 @@ router.post("/", (req,res) => {
 
 })
 
-router.post("/", (req,res) => {
-
+router.post('/', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await Employee.findOne({ where: { email } });
+    if (!user || user.password !== password) {
+      return res.send(false);
+    }
+    res.send(true);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error authenticating user');
+  }
 });
 
 module.exports = router;

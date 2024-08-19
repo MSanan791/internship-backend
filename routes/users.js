@@ -4,7 +4,7 @@ var fs = require('fs');
 const { Sequelize, DataTypes, Model } = require('sequelize');
 
 const sequelize = new Sequelize('postgres://postgres:msX-143-uN@localhost:5432/postgres');
-
+ 
 class Employee extends Model {}
 
 Employee.init(
