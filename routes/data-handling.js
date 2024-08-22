@@ -2,16 +2,30 @@ var express = require("express");
 const os = require('os');
 var router = express.Router();
 var fs = require('fs');
-const multer  = require('multer');
+const multer = require('multer');
 const path = require('path');
 const { Sequelize, DataTypes, Model } = require('sequelize');
 var user;
+// import { PostgresDialect } from '@sequelize/postgres';
 const jwt = require('jsonwebtoken');
 
 
-const sequelize = new Sequelize('postgres://postgres:msX-143-uN@localhost:5432/postgres');
 
-class Employee extends Model {}
+
+const sequelize = new Sequelize('postgres', 'postgres', 'msX-143-uN', {
+  host: 'internship-database.cvi4m8wcqbo1.us-east-1.rds.amazonaws.com',
+  dialect: 'postgres',
+  // dialect: 'postgres',
+  dialectOptions: {
+    ssl: {
+      // CAUTION: there are better ways to load the certificate, see comments below
+      ca: fs.readFileSync(path.join(__dirname, '../us-east-1-bundle.pem')).toString()
+    }
+  }
+});
+
+
+class Employee extends Model { }
 
 Employee.init(
   {
@@ -25,12 +39,12 @@ Employee.init(
       // allowNull defaults to true
     },
     email: {
-        type: DataTypes.STRING,
-        allowNull:false,
-      },
-    password:{
-        type: DataTypes.STRING,
-        allowNull:false
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false
     }
   },
   {
@@ -47,7 +61,7 @@ Employee.init(
     console.error(err);
   }
 })();
- 
+
 
 // the defined model is the class itself
 console.log(Employee === sequelize.models.User); // true
@@ -66,84 +80,87 @@ router.post('/adduser/', async (req, res) => {
   }
 });
 
-router.post('/uploadfile', async (req,res) =>{
+router.post('/uploadfile', async (req, res) => {
 
-    const storage = multer.diskStorage({
-        destination: './public/uploads/',
-        filename: function(req, file, cb) {
-          cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+  const storage = multer.diskStorage({
+    destination: './public/uploads/',
+    filename: function (req, file, cb) {
+      cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+    }
+  });
+
+  const upload = multer({
+    storage: storage,
+    limits: { fileSize: 12000000 } // 12MB file size limit
+  }).single('file');
+
+
+  upload(req, res, (err) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: err });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: 'Please send file' });
+    }
+    console.log(req.file);
+    res.send('File uploaded!');
+  });
+})
+
+
+
+router.post(`/`, async (req, res) => {
+
+
+
+  const { email, password } = req.body
+  console.log(req.body);
+  try {
+    fs.readFile("./data.json", 'utf8', (error, data) => {
+      user = JSON.parse(data)
+      person = user.find((person) => person.email === email)
+
+      if (person !== undefined) {
+        if (person.password === password) {
+
+          res.send(true)
+        } else {
+          res.send(false)
         }
-      });
-    
-      const upload = multer({
-        storage: storage,
-        limits: { fileSize: 12000000 } // 12MB file size limit
-      }).single('file');
-    
-    
-    upload(req, res, (err) => {
-        if (err) {
-          console.error(err);
-          return res.status(500).json({ error: err });
-         }
-        if (!req.file) {
-           return res.status(400).json({ error: 'Please send file' });
-         }
-         console.log(req.file);
-         res.send('File uploaded!');
-     });
+      }
+    })
+  } catch (err) {
+    console.error(err)
+  }
+
+
+
+
+
+
 })
 
+router.post("/", (req, res) => {
 
+  // fs.readFile('./data.json', 'utf8',(error, data) => {
+  //     if(error){
+  //         console.error(error)
+  //         throw error;
+  //     }
 
-router.post(`/`, async (req,res) => {
-   
-         
-         
-         const{email, password} = req.body
-            console.log(req.body);
-            try{   fs.readFile("./data.json",'utf8', (error,data) => {
-                user = JSON.parse(data)
-                person = user.find((person)=>person.email === email)
-                
-                if(person !== undefined){
-                    if(person.password === password){
+  //     user = JSON.parse(data)
+  // })
 
-                        res.send(true)
-                    }else{
-                        res.send(false)
-                    }}
-            })}catch(err){
-                console.error(err)
-            }
-         
-      
+  // if(!user){
+  //     return res.status(404).send(user)
+  // }
+  //     return res.status(200).send(user)
 
-                
-        
-    
-})
-
-router.post("/", (req,res) => {
-
-    // fs.readFile('./data.json', 'utf8',(error, data) => {
-    //     if(error){
-    //         console.error(error)
-    //         throw error;
-    //     }
-
-    //     user = JSON.parse(data)
-    // })
-
-    // if(!user){
-    //     return res.status(404).send(user)
-    // }
-    //     return res.status(200).send(user)
-
-    const{email, password} = req.body
-    const user = {name: email}
-   const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN__SECRET)
-   res.send({accessToken: accessToken})
+  const { email, password } = req.body
+  const user = { name: email }
+  const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN__SECRET)
+  res.send({ accessToken: accessToken })
 
 
 })

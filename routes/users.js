@@ -2,9 +2,21 @@ var express = require('express');
 var router = express.Router();
 var fs = require('fs');
 const { Sequelize, DataTypes, Model } = require('sequelize');
+const path = require('path');
 
-const sequelize = new Sequelize('postgres://postgres:msX-143-uN@localhost:5432/postgres');
- 
+
+const sequelize = new Sequelize('postgres', 'postgres', 'msX-143-uN', {
+  host: 'internship-database.cvi4m8wcqbo1.us-east-1.rds.amazonaws.com',
+  dialect: 'postgres',
+  // dialect: 'postgres',
+  dialectOptions: {
+    ssl: {
+      // CAUTION: there are better ways to load the certificate, see comments below
+      ca: fs.readFileSync(path.join(__dirname, '../us-east-1-bundle.pem')).toString()
+    }
+  }
+});
+
 class Employee extends Model {}
 
 Employee.init(
@@ -46,14 +58,14 @@ router.get('/', function(req, res, next) {
   res.send('respond with a resource');
 });
 
-// router.get('/employees', async (req,res)=>{
-//   try{  fs.readFile("./data.json", 'utf-8', (error,data) =>{
-//         user = JSON.parse(data)
-//         res.send(user)
-//     })}catch(err){
-//         console.error(err)
-//     }
-// })
+router.get('/employees', async (req,res)=>{
+  try{  fs.readFile("./data.json", 'utf-8', (error,data) =>{
+        user = JSON.parse(data)
+        res.send(user)
+    })}catch(err){
+        console.error(err)
+    }
+})
 
 router.get('/employees', async (req,res)=>{
   try{
