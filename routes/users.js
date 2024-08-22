@@ -58,14 +58,14 @@ router.get('/', function(req, res, next) {
   res.send('respond with a resource');
 });
 
-router.get('/employees', async (req,res)=>{
-  try{  fs.readFile("./data.json", 'utf-8', (error,data) =>{
-        user = JSON.parse(data)
-        res.send(user)
-    })}catch(err){
-        console.error(err)
-    }
-})
+// router.get('/employees', async (req,res)=>{
+//   try{  fs.readFile("./data.json", 'utf-8', (error,data) =>{
+//         user = JSON.parse(data)
+//         res.send(user)
+//     })}catch(err){
+//         console.error(err)
+//     }
+// })
 
 router.get('/employees', async (req,res)=>{
   try{
