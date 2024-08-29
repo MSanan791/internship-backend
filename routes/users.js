@@ -70,7 +70,7 @@ router.get('/', function(req, res, next) {
 router.get('/employees', async (req,res)=>{
   try{
     const data = await Employee.findAll()
-    console.log(JSON.stringify(data, null, 2))
+    // console.log(JSON.stringify(data, null, 2))
     res.send(data)
     }catch(err){
         console.error(err)
